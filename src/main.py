@@ -99,7 +99,7 @@ class Food():
 
 
 class Snake():
-    def __init__(self, ai=False, color=(255, 0, 0), num=1):
+    def __init__(self, ai=True, color=(255, 0, 0), num=1):
         self.pos_x = randint(1, GRID_SIZE - 10)
         self.pos_y = randint(1, GRID_SIZE - 2)
         self.positions = [self.get_head()]
@@ -304,7 +304,7 @@ def main():
     ## Initialize game objects (snake)
     snake = Snake(ai=False, num=1)
     Registry.add_snake(snake)
-    Registry.add_snake(Snake(ai=True, color=(0,0,255), num=2))
+    Registry.add_snake(Snake(ai=False, color=(0,0,255), num=2))
     for _ in range(NUM_FOODS):
         food = Food()
         Registry.add_food(food)
