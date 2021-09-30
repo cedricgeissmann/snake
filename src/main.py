@@ -4,8 +4,8 @@ import sys
 from random import randint
 
 ## Globals:
-BLOCK_SIZE = 20
-GRID_SIZE = 60
+BLOCK_SIZE = 32
+GRID_SIZE = 30
 FPS = 10
 MAX_FOOD_EFFECTS = 3
 
@@ -252,7 +252,8 @@ def main():
     ## Initialization
     running = True
 
-    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE * BLOCK_SIZE))
+    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE *
+        BLOCK_SIZE))
     pygame.display.set_caption("Snake")
     window.fill(0)
 
