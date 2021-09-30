@@ -269,7 +269,7 @@ def main():
     ## Initialize game objects (snake)
     snake = Snake(ai=False, num=1)
     Registry.add_snake(snake)
-    Registry.add_snake(Snake(ai=True, color=(0,0,255), num=2))
+    Registry.add_snake(Snake(ai=False, color=(0,0,255), num=2))
     food = Food()
     Registry.add_food(food)
     food.new()
