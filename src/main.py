@@ -8,10 +8,12 @@ from random import randint
 BLOCK_SIZE = 20
 GRID_SIZE = 60
 FPS = 10
+MAX_FOOD_EFFECTS = 3
 
 class Registry():
     snakes = []
     foods = []
+    blocks = []
 
     @classmethod
     def get_snakes(cls):
@@ -29,23 +31,65 @@ class Registry():
     def get_foods(cls):
         return cls.foods
 
+    @classmethod
+    def add_block(cls, x, y):
+        cls.blocks.append(Block(x, y, life=100))
+
+    @classmethod
+    def get_blocks(cls):
+        return cls.blocks
+
+
+class Block():
+    pos_x = 0
+    pos_y = 0
+    life = 100
+    def __init__(self, x, y, life=100):
+        self.pos_x = x
+        self.pos_y = y
+        self.life = life
+
+    def decay(self):
+        self.life -= 1
+
+    def draw(self, surface):
+        color = (128, 128, 128)
+        pygame.draw.rect(surface, color, (self.pos_x * BLOCK_SIZE, self.pos_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
 
 class Food():
     pos_x = 0
     pos_y = 0
     grow = 1
+    effect = 1
     def new(self):
         self.pos_x = randint(0, GRID_SIZE - 2)
         self.pos_y = randint(0, GRID_SIZE - 2)
         self.grow = randint(1, 3)
+        self.grow = 0
+        self.effect = randint(1, MAX_FOOD_EFFECTS)
+        if self.effect == 1:
+            self.grow = 5
+        elif self.effect == 2:
+            self.grow = 5
+        elif self.effect == 3:
+            self.grow = 20
 
 
     def get_pos(self):
         return (self.pos_x, self.pos_y)
 
     def draw(self, surface):
-        color = (0, 255, 0)
+        if self.effect == 1:
+            color = (0, 255, 0)
+        elif self.effect == 2:
+            color = (255, 255, 0)
+        elif self.effect == 3:
+            color = (255, 0, 255)
+        else:
+            color = (0, 255, 0)
         pygame.draw.rect(surface, color, (self.pos_x * BLOCK_SIZE, self.pos_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
 
 class Snake():
     def __init__(self, ai=True, color=(255, 0, 0), num=1):
@@ -56,9 +100,10 @@ class Snake():
         self.ai = ai
         self.color = color
         self.num = num
-        self.growing = 3
+        self.growing = 5
         self.has_moved = False
         self.cant_move = 0
+        self.autopilot = 0
 
     def next_dir(self):
         food = Registry.get_foods()[0]
@@ -67,6 +112,8 @@ class Snake():
         for snake in Registry.get_snakes():
             for (x, y) in snake.positions:
                 field[x][y] += 1000
+        for block in Registry.get_blocks():
+            field[block.pos_x][block.pos_y] += 1000
 
         if self.dir % 2 == 0:
             update_dir = 1 if self.dir == 0 else - 1
@@ -102,8 +149,9 @@ class Snake():
         return (self.pos_x, self.pos_y)
 
     def update(self, surface):
-        if self.ai:
+        if self.ai or self.autopilot > 0:
             self.next_dir()
+            self.autopilot -= 1
 
         if self.dir == 0:
             self.pos_x += 1
@@ -120,9 +168,12 @@ class Snake():
             pygame.draw.rect(surface, (0, 0, 0), (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
         else:
             self.growing -= 1
-
         for (x, y) in self.positions:
             pygame.draw.rect(surface, self.color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+
+        if self.cant_move > 0:
+            self.cant_move -= 1
+
 
     def change_dir(self, direction):
         if not self.has_moved:
@@ -135,6 +186,9 @@ class Snake():
         (head_x, head_y) = self.get_head()
         if head_x > GRID_SIZE or head_y > GRID_SIZE or head_x < 0 or head_y < 0:
             player_lost(self.num)
+        for block in Registry.get_blocks():
+            if head_x == block.pos_x and head_y == block.pos_y:
+                player_lost(self.num)
         for snake in Registry.get_snakes():
             for (x, y) in snake.positions[:-1]:
                 if (x == head_x and y == head_y):
@@ -142,8 +196,23 @@ class Snake():
 
         for food in Registry.get_foods():
             if head_x == food.pos_x and head_y == food.pos_y:
-                self.growing = food.grow
+                # Eat food
+                if food.effect == 1:
+                    self.growing = food.grow
+                elif food.effect == 2:
+                    for snake in Registry.get_snakes():
+                        if snake != self:
+                            snake.cant_move = food.grow
+                elif food.effect == 3:
+                    self.autopilot = food.grow
+
                 food.new()
+
+    def drop(self):
+        if len(self.positions) > 2:
+            for _ in range(2):
+                (x, y) = self.positions.pop(0)
+                Registry.add_block(x, y)
 
 
 def player_lost(num):
@@ -165,6 +234,8 @@ def handle_keypress(key):
         snakes[0].change_dir(2)
     elif key == pygame.K_DOWN:
         snakes[0].change_dir(3)
+    elif key == pygame.K_SPACE:
+        snakes[0].drop()
 
     elif key == pygame.K_d:
         snakes[1].change_dir(0)
@@ -215,6 +286,12 @@ def main():
             for y in range(GRID_SIZE):
                 color = (0, 0, 0) if (x + y) % 2 == 0 else (32, 32, 32)
                 pygame.draw.rect(window, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+        for (i, block) in enumerate(Registry.get_blocks()):
+            block.decay()
+            if block.life <= 0:
+                Registry.get_blocks().pop(i)
+            block.draw(window)
+
 
         for snake in Registry.get_snakes():
             snake.update(window)
