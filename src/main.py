@@ -4,10 +4,11 @@ import sys
 from random import randint
 
 ## Globals:
-BLOCK_SIZE = 10
-GRID_SIZE = 60
+BLOCK_SIZE = 20
+GRID_SIZE = 50
 FPS = 10
-MAX_FOOD_EFFECTS = 3
+MAX_FOOD_EFFECTS = 4
+NUM_FOODS = 3
 
 class Registry():
     snakes = []
@@ -73,6 +74,8 @@ class Food():
             self.grow = 5
         elif self.effect == 3:
             self.grow = 20
+        elif self.effect == 4:
+            self.grow = 3
 
 
     def get_pos(self):
@@ -85,9 +88,14 @@ class Food():
             color = (255, 255, 0)
         elif self.effect == 3:
             color = (255, 0, 255)
+        elif self.effect == 4:
+            color = (0, 255, 255)
         else:
             color = (0, 255, 0)
-        pygame.draw.rect(surface, color, (self.pos_x * BLOCK_SIZE, self.pos_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+        img = pygame.image.load(f"img/effect_{self.effect}.png")
+        img = pygame.transform.scale(img, (BLOCK_SIZE, BLOCK_SIZE))
+        surface.blit(img, (self.pos_x * BLOCK_SIZE, self.pos_y * BLOCK_SIZE))
+        # pygame.draw.rect(surface, color, (self.pos_x * BLOCK_SIZE, self.pos_y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
 
 class Snake():
@@ -110,7 +118,10 @@ class Snake():
         field = [[abs(x-food_x) + abs(y-food_y) for y in range(GRID_SIZE)] for x in range(GRID_SIZE)]
         for snake in Registry.get_snakes():
             for (x, y) in snake.positions:
-                field[x][y] += 1000
+                try:
+                    field[x][y] += 1000
+                except(IndexError):
+                    pass
         for block in Registry.get_blocks():
             field[block.pos_x][block.pos_y] += 1000
 
@@ -120,20 +131,26 @@ class Snake():
                 heur = field[self.pos_x + update_dir][self.pos_y]
             except(IndexError):
                 heur = 10000
-            heur_top = field[self.pos_x][self.pos_y - 1]
-            heur_bot = field[self.pos_x][self.pos_y + 1]
-            if heur_top < heur or heur_bot < heur:
-                self.dir = 1 if heur_top < heur_bot else 3
+            try:
+                heur_top = field[self.pos_x][self.pos_y - 1]
+                heur_bot = field[self.pos_x][self.pos_y + 1]
+                if heur_top < heur or heur_bot < heur:
+                    self.dir = 1 if heur_top < heur_bot else 3
+            except(IndexError):
+                pass
         else:
             update_dir = 1 if self.dir == 3 else - 1
             try:
                 heur = field[self.pos_x][self.pos_y + update_dir]
             except(IndexError):
                 heur = 10000
-            heur_left = field[self.pos_x - 1][self.pos_y]
-            heur_right = field[self.pos_x + 1][self.pos_y]
-            if heur_left < heur or heur_right < heur:
-                self.dir = 2 if heur_left < heur_right else 0
+            try:
+                heur_left = field[self.pos_x - 1][self.pos_y]
+                heur_right = field[self.pos_x + 1][self.pos_y]
+                if heur_left < heur or heur_right < heur:
+                    self.dir = 2 if heur_left < heur_right else 0
+            except(IndexError):
+                pass
 
         if self.pos_x == 0 and self.dir == 2:
             self.dir = 3
@@ -183,7 +200,7 @@ class Snake():
 
     def check(self):
         (head_x, head_y) = self.get_head()
-        if head_x > GRID_SIZE or head_y > GRID_SIZE or head_x < 0 or head_y < 0:
+        if head_x >= GRID_SIZE or head_y >= GRID_SIZE or head_x < 0 or head_y < 0:
             player_lost(self.num)
         for block in Registry.get_blocks():
             if head_x == block.pos_x and head_y == block.pos_y:
@@ -204,6 +221,12 @@ class Snake():
                             snake.cant_move = food.grow
                 elif food.effect == 3:
                     self.autopilot = food.grow
+                elif food.effect == 4:
+                    for snake in Registry.get_snakes():
+                        if snake != self:
+                            for _ in range(food.grow):
+                                if len(snake.positions) > 1:
+                                    snake.positions.pop(0)
 
                 food.new()
 
@@ -215,6 +238,16 @@ class Snake():
 
 
 def player_lost(num):
+    lose_screen = pygame.image.load(f"img/lose_{num}.jpeg")
+    window = pygame.display.set_mode((0, 0))
+    window.blit(lose_screen, (0, 0))
+    pygame.display.update()
+
+    clock = pygame.time.Clock()
+
+    for _ in range(5):
+        clock.tick(1)
+
     print(f"Spieler {num} hat verloren!")
     pygame.quit()
     sys.exit()
@@ -254,25 +287,28 @@ def main():
     ## Initialization
     running = True
 
-    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE * BLOCK_SIZE))
-    pygame.display.set_caption("Snake")
-    window.fill(0)
+    pygame.display.set_caption("Viper-Fighter")
 
-    # title_screen = pygame.image.load('img/title_screen.png')
-    # window.blit(title_screen, (0, 0))
+    title_screen = pygame.image.load('img/title_screen.jpeg')
+    window = pygame.display.set_mode((title_screen.get_width(),
+        title_screen.get_height()))
+    window.blit(title_screen, (0, 0))
+    pygame.display.update()
 
     clock = pygame.time.Clock()
 
-    for _ in range(1):
+    for _ in range(10):
         clock.tick(1)
+    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE * BLOCK_SIZE))
 
     ## Initialize game objects (snake)
     snake = Snake(ai=False, num=1)
     Registry.add_snake(snake)
-    Registry.add_snake(Snake(ai=False, color=(0,0,255), num=2))
-    food = Food()
-    Registry.add_food(food)
-    food.new()
+    Registry.add_snake(Snake(ai=True, color=(0,0,255), num=2))
+    for _ in range(NUM_FOODS):
+        food = Food()
+        Registry.add_food(food)
+        food.new()
 
 
     ## Game loop
@@ -285,7 +321,7 @@ def main():
                 handle_keypress(event.key)
         for x in range(GRID_SIZE):
             for y in range(GRID_SIZE):
-                color = (0, 0, 0) if (x + y) % 2 == 0 else (32, 32, 32)
+                color = (255, 255, 255) if (x + y) % 2 == 0 else (240, 240, 240)
                 pygame.draw.rect(window, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
         for (i, block) in enumerate(Registry.get_blocks()):
             block.decay()
@@ -295,13 +331,12 @@ def main():
 
 
         for snake in Registry.get_snakes():
+            snake.check()
+            snake.has_moved = False
             snake.update(window)
         for food in Registry.get_foods():
             food.draw(window)
 
-        for snake in Registry.get_snakes():
-            snake.check()
-            snake.has_moved = False
         clock.tick(FPS)
 
 
