@@ -4,8 +4,8 @@ import sys
 from random import randint
 
 ## Globals:
-BLOCK_SIZE = 32
-GRID_SIZE = 30
+BLOCK_SIZE = 10
+GRID_SIZE = 60
 FPS = 10
 MAX_FOOD_EFFECTS = 3
 
@@ -233,7 +233,7 @@ def handle_keypress(key):
         snakes[0].change_dir(2)
     elif key == pygame.K_DOWN:
         snakes[0].change_dir(3)
-    elif key == pygame.K_SPACE:
+    elif key == pygame.K_RETURN:
         snakes[0].drop()
 
     elif key == pygame.K_d:
@@ -244,6 +244,8 @@ def handle_keypress(key):
         snakes[1].change_dir(2)
     elif key == pygame.K_s:
         snakes[1].change_dir(3)
+    elif key == pygame.K_SPACE:
+        snakes[1].drop()
 
 
 def main():
@@ -252,8 +254,7 @@ def main():
     ## Initialization
     running = True
 
-    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE *
-        BLOCK_SIZE))
+    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE * BLOCK_SIZE))
     pygame.display.set_caption("Snake")
     window.fill(0)
 
