@@ -57,6 +57,8 @@ class Snake():
         self.color = color
         self.num = num
         self.growing = 3
+        self.has_moved = False
+        self.cant_move = 0
 
     def next_dir(self):
         food = Registry.get_foods()[0]
@@ -123,8 +125,11 @@ class Snake():
             pygame.draw.rect(surface, self.color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
 
     def change_dir(self, direction):
-        if (self.dir + direction) % 2 == 1:
-            self.dir = direction
+        if not self.has_moved:
+            if self.cant_move <= 0:
+                if (self.dir + direction) % 2 == 1:
+                    self.dir = direction
+        self.has_moved = True
 
     def check(self):
         (head_x, head_y) = self.get_head()
@@ -145,7 +150,6 @@ def player_lost(num):
     print(f"Spieler {num} hat verloren!")
     pygame.quit()
     sys.exit()
-
 
 
 def handle_keypress(key):
@@ -182,7 +186,13 @@ def main():
     pygame.display.set_caption("Snake")
     window.fill(0)
 
+    # title_screen = pygame.image.load('img/title_screen.png')
+    # window.blit(title_screen, (0, 0))
+
     clock = pygame.time.Clock()
+
+    for _ in range(1):
+        clock.tick(1)
 
     ## Initialize game objects (snake)
     snake = Snake(ai=False, num=1)
@@ -213,8 +223,8 @@ def main():
 
         for snake in Registry.get_snakes():
             snake.check()
+            snake.has_moved = False
         clock.tick(FPS)
-
 
 
 if __name__ == "__main__":
