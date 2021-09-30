@@ -99,7 +99,7 @@ class Food():
 
 
 class Snake():
-    def __init__(self, ai=True, color=(255, 0, 0), num=1):
+    def __init__(self, ai=False, color=(255, 0, 0), num=1):
         self.pos_x = randint(1, GRID_SIZE - 10)
         self.pos_y = randint(1, GRID_SIZE - 2)
         self.positions = [self.get_head()]
