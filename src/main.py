@@ -215,13 +215,13 @@ class Snake():
                 # Eat food
                 if food.effect == 1:
                     self.growing = food.grow
-                elif food.effect == 2:
+                elif food.effect == 3:
                     for snake in Registry.get_snakes():
                         if snake != self:
                             snake.cant_move = food.grow
-                elif food.effect == 3:
-                    self.autopilot = food.grow
                 elif food.effect == 4:
+                    self.autopilot = food.grow
+                elif food.effect == 2:
                     for snake in Registry.get_snakes():
                         if snake != self:
                             for _ in range(food.grow):
