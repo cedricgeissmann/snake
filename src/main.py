@@ -239,7 +239,7 @@ class Snake():
 
 def player_lost(num):
     lose_screen = pygame.image.load(f"img/lose_{num}.jpeg")
-    window = pygame.display.set_mode((0, 0))
+    window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     window.blit(lose_screen, (0, 0))
     pygame.display.update()
 
@@ -291,7 +291,7 @@ def main():
 
     title_screen = pygame.image.load('img/title_screen.jpeg')
     window = pygame.display.set_mode((title_screen.get_width(),
-        title_screen.get_height()))
+        title_screen.get_height()), pygame.FULLSCREEN)
     window.blit(title_screen, (0, 0))
     pygame.display.update()
 
@@ -299,12 +299,12 @@ def main():
 
     for _ in range(10):
         clock.tick(1)
-    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE * BLOCK_SIZE))
+    window = pygame.display.set_mode((GRID_SIZE * BLOCK_SIZE, GRID_SIZE * BLOCK_SIZE), pygame.FULLSCREEN)
 
     ## Initialize game objects (snake)
     snake = Snake(ai=False, num=1)
     Registry.add_snake(snake)
-    Registry.add_snake(Snake(ai=False, color=(0,0,255), num=2))
+    Registry.add_snake(Snake(ai=True, color=(0,0,255), num=2))
     for _ in range(NUM_FOODS):
         food = Food()
         Registry.add_food(food)
